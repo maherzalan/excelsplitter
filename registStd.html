@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديث بيانات الطلاب</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>تحديث بيانات الطلاب</h1>
+        <input type="file" id="excelFile" accept=".xlsx, .xls" />
+        <div id="message-container"></div>
+    </div>
+
+    <script>
+        document.getElementById('excelFile').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    json.forEach(student => {
+                        updateStudentData(student);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        async function updateStudentData(student) {
+            const url = "https://emis.unrwa.org/Result/ConfirmRegisterStudentData";
+            const headers = {
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "accept-language": "ar,en;q=0.9",
+                "cache-control": "max-age=0",
+                "content-type": "application/x-www-form-urlencoded",
+                "sec-ch-ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"Google Chrome\";v=\"132\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "document",
+                "sec-fetch-mode": "navigate",
+                "sec-fetch-site": "same-origin",
+                "sec-fetch-user": "?1",
+                "upgrade-insecure-requests": "1"
+            };
+
+            const body = new URLSearchParams({
+                IdentityNo: student.IdentityNo,
+                birthYear: student.birthYear,
+                StudentId: student.StudentId,
+                MobileConfirm: student.MobileConfirm
+            }).toString();
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: body,
+                    credentials: 'include'
+                });
+
+                const responseText = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(responseText, 'text/html');
+                const messageElement = doc.querySelector('.error-contianer.alert.alert-success');
+
+                if (messageElement) {
+                    const messageContainer = document.getElementById('message-container');
+                    messageContainer.innerHTML = messageElement.outerHTML;
+                }
+            } catch (error) {
+                console.error('Error updating student data:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>إحصائيات الإجابات</title>
+  <script src="xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx-style.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.8;
+      background-color: #f0f8ff;
+      padding: 20px;
+      color: #2c3e50;
+      direction: rtl;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      text-align: right;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #3498db;
+    }
+
+    ul {
+      padding-right: 20px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #3498db;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin: 5px;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    input[type="file"] {
+      margin-bottom: 15px;
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+      text-align: center;
+    }
+
+    .instructions {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+
+    .instructions h3 {
+      margin-top: 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>إحصائيات الإجابات لكل ملف</h1>
+
+    <!-- قسم الوصف والتعليمات -->
+    <div class="instructions">
+      <h2>📊 وصف السكربت وآلية العمل</h2>
+      <p>
+        هذا السكربت هو أداة تفاعلية تسمح للمستخدمين بتحميل ملفات Excel تحتوي على إجابات الطلاب، ثم تحليلها لعرض إحصائيات
+        مفصلة عن النسب المئوية للإجابات الصحيحة والخاطئة لكل سؤال. بالإضافة إلى ذلك، يمكن تنزيل النتائج على شكل ملف
+        Excel.
+      </p>
+      <h3>خطوات الاستخدام:</h3>
+      <ol>
+        <li>قم بتحميل ملفات Excel باستخدام الزر "اختيار الملفات".</li>
+        <li>بعد تحميل الملفات، سيتم عرض النسب المئوية للإجابات الصحيحة والخاطئة في الجدول.</li>
+        <li>استخدم الزر "تنزيل النسب المئوية كملف Excel" لتنزيل النسب المئوية.</li>
+        <li>استخدم الزر "تنزيل النتائج كملف Excel" لتنزيل النتائج الفردية للطلاب.</li>
+      </ol>
+      <h3>تعليمات:</h3>
+      <ul>
+        <li>يجب أن تكون ملفات Excel بتنسيق `.xls` أو `.xlsx`.</li>
+        <li>يجب أن تحتوي الملفات على الأعمدة التالية بالترتيب: رقم الهوية، اسم الطالب، النتيجة، ثم الإجابات.</li>
+        <li>النتيجة يجب أن تكون بتنسيق مخصص مثل `6 / 6`.</li>
+      </ul>
+    </div>
+    <label for="percentage">اختر النسبة (%): </label>
+    <input type="number" id="percentage" value="20" min="1" max="100" step="1">
+    <button id="applyPercentage">تطبيق</button>
+
+    <!-- قسم تحميل الملفات -->
+    <h2>تحميل الملفات</h2>
+    <input type="file" multiple id="fileInput" accept=".xls,.xlsx">
+    <button id="downloadPercentages" style="display: none;">تنزيل النسب المئوية كملف Excel</button>
+    <button id="downloadResults" style="display: none;">تنزيل النتائج كملف Excel</button>
+    <button id="downloadAllResults" style="display: none;">تجميع الملفات جميعها في ملف واحد </button>
+    <button id="downloadAllstatictics" style="">النسبة </button>
+    <!-- قسم عرض النتائج -->
+    <h2>النتائج</h2>
+    <table id="resultsTable" style="display: none;">
+      <thead>
+        <tr>
+          <th>اسم الملف</th>
+          <th>الصف</th>
+          <th>الأسبوع</th>
+          <th>السؤال</th>
+          <th>نص السؤال</th>
+          <th>العدد الكلي</th>
+          <th>صحيحة</th>
+          <th>خاطئة</th>
+          <th>% صحيحة</th>
+          <th>% خاطئة</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- تذييل الصفحة -->
+  <footer>
+    جميع الحقوق محفوظة لدى Mr.Maher Zalan | 📞 0599535638
+  </footer>
+
+  <script>
+    document.getElementById('fileInput').addEventListener('change', handleFiles);
+    const resultsTable = document.getElementById('resultsTable');
+    const downloadPercentagesButton = document.getElementById('downloadPercentages');
+    const downloadResultsButton = document.getElementById('downloadResults');
+    const downloadAllResultsButton = document.getElementById('downloadAllResults');
+    const downloadAllstaticticsButton = document.getElementById('downloadAllstatictics');
+
+    let allResults = [];
+    let percentageResults = [];
+    let allCombinedResults = [];
+
+    document.getElementById('applyPercentage').addEventListener('click', () => {
+      const percentage = parseFloat(document.getElementById('percentage').value) / 100;
+      if (percentage > 0 && percentage <= 1) {
+        const selectedStudents = getRandomSample(allResults, percentage);
+        console.log(selectedStudents);
+      } else {
+        alert("الرجاء إدخال نسبة صحيحة بين 1 و 100");
+      }
+    });
+    function extractGradeAndWeek(fileName) {
+      const gradeMatch = fileName.match(/الصف\s*([\p{L}\d]+)/u);
+      const weekMatch = fileName.match(/(?:الأسبوع|للأسبوع)\s*([\p{L}\d]+)/u);
+
+      const grade = gradeMatch ? `الصف ${gradeMatch[1]}` : 'غير معروف';
+      const week = weekMatch ? `الأسبوع ${weekMatch[1]}` : 'غير معروف';
+
+      return { grade, week };
+    }
+
+    function handleFiles(event) {
+      const files = event.target.files;
+      let results = [];
+      let loaded = 0;
+
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const workbook = XLSX.read(e.target.result, { type: 'binary', cellStyles: true });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+
+          const questions = rows[0].slice(4);
+          const correctAnswers = rows[1]?.slice(4);
+          const summary = {};
+
+          rows.slice(1).forEach(row => {
+            row.slice(4).forEach((answer, i) => {
+              const question = `سؤال ${i + 1}`;
+              const questionText = questions[i] || `سؤال ${i + 1}`;
+              summary[questionText] = summary[questionText] || { question: "سؤال", correct: 0, wrong: 0 };
+              summary[questionText].question = question;
+              if (answer === correctAnswers[i]) {
+                summary[questionText].correct++;
+              } else {
+                summary[questionText].wrong++;
+              }
+            });
+          });
+
+          const { grade, week } = extractGradeAndWeek(file.name);
+
+          Object.entries(summary).forEach(([questionText, { question, correct, wrong }]) => {
+            const total = correct + wrong;
+            const result = {
+              fileName: file.name,
+              grade: grade,
+              week: week,
+              question: question,
+              questionText: questionText,
+              total: total,
+              correct,
+              wrong,
+              correctPercent: ((correct / total) * 100).toFixed(2),
+              wrongPercent: ((wrong / total) * 100).toFixed(2)
+            };
+            results.push(result);
+            percentageResults.push(result);
+          });
+
+          rows.slice(1).forEach((row, rowIndex) => {
+            const cellAddress = XLSX.utils.encode_cell({ r: rowIndex + 1, c: 1 });
+            const cell = sheet[cellAddress];
+            const formattedValue = cell ? cell.w : row[1];
+
+            allResults.push({
+              studentID: row[3],
+              studentName: row[2],
+              result: formattedValue
+            });
+
+            allCombinedResults.push({
+              fileName: file.name,
+              studentID: row[10],
+              studentName: row[12],
+              result: row[13]
+            });
+          });
+
+          loaded++;
+          if (loaded === files.length) {
+            displayResults(results);
+            downloadPercentagesButton.style.display = 'inline-block';
+            downloadResultsButton.style.display = 'inline-block';
+            downloadAllResultsButton.style.display = 'inline-block';
+          }
+        };
+        reader.readAsBinaryString(file);
+      }
+    }
+
+    function getRandomSample(data, percentage) {
+      const groupedByClass = {};
+
+      // تجميع الطلاب حسب الشعبة
+      data.forEach(student => {
+        const studentClass = student.class || "غير معروف"; // تأكد من أن بياناتك تحتوي على sh3ba أو class
+        if (!groupedByClass[studentClass]) {
+          groupedByClass[studentClass] = [];
+        }
+        groupedByClass[studentClass].push(student);
+      });
+
+      // اختيار عينة عشوائية حسب النسبة المدخلة
+      const selectedStudents = [];
+      Object.entries(groupedByClass).forEach(([className, students]) => {
+        const sampleSize = Math.ceil(students.length * percentage);
+
+        // في حالة كانت النسبة أكبر من عدد الطلاب، خذ جميع الطلاب
+        if (sampleSize >= students.length) {
+          selectedStudents.push(...students);
+        } else {
+          const shuffled = students.sort(() => 0.5 - Math.random());
+          selectedStudents.push(...shuffled.slice(0, sampleSize));
+        }
+      });
+
+      return selectedStudents;
+    }
+
+
+    function displayResults(results) {
+      const tbody = document.querySelector('#resultsTable tbody');
+      tbody.innerHTML = '';
+
+      results.forEach(({ fileName, grade, week, question, questionText, total, correct, wrong, correctPercent, wrongPercent }) => {
+        const row = `<tr>
+          <td>${fileName}</td>
+          <td>${grade}</td>
+          <td>${week}</td>
+          <td>${question}</td>
+          <td>${questionText}</td>
+          <td>${total}</td>
+          <td>${correct}</td>
+          <td>${wrong}</td>
+          <td>${correctPercent}%</td>
+          <td>${wrongPercent}%</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+
+      resultsTable.style.display = 'table';
+    }
+
+    function applyExcelStyles(ws) {
+      const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "3498db" } },
+        alignment: { horizontal: "center" }
+      };
+
+      const dataStyle = {
+        font: { color: { rgb: "2c3e50" } },
+        alignment: { horizontal: "center" }
+      };
+
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (!ws[cellAddress]) continue;
+        ws[cellAddress].s = headerStyle;
+      }
+
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!ws[cellAddress]) continue;
+          ws[cellAddress].s = dataStyle;
+        }
+      }
+    }
+
+    downloadResultsButton.addEventListener('click', () => {
+      const ws = XLSX.utils.json_to_sheet(allResults);
+      applyExcelStyles(ws);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "النتائج");
+      XLSX.writeFile(wb, 'النتائج.xlsx');
+    });
+
+    downloadPercentagesButton.addEventListener('click', () => {
+      const ws = XLSX.utils.json_to_sheet(percentageResults);
+      applyExcelStyles(ws);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "النسب المئوية");
+      XLSX.writeFile(wb, 'النسب_المئوية.xlsx');
+    });
+
+    downloadAllResultsButton.addEventListener('click', () => {
+      const ws = XLSX.utils.json_to_sheet(allCombinedResults);
+      applyExcelStyles(ws);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "النتائج المجمعة");
+      XLSX.writeFile(wb, 'النتائج_المجمعة.xlsx');
+    });
+
+    downloadAllstaticticsButton.addEventListener('click', () => {
+      const percentage = parseFloat(document.getElementById('percentage').value) / 100;
+      if (percentage > 0 && percentage <= 1) {
+        const selectedStudents = getRandomSample(allResults, percentage);
+        console.log(selectedStudents);
+        const ws = XLSX.utils.json_to_sheet(selectedStudents);
+        applyExcelStyles(ws);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "النتائج المجمعة");
+        XLSX.writeFile(wb, 'النتائج_المجمعة.xlsx');
+      } else {
+        alert("الرجاء إدخال نسبة صحيحة بين 1 و 100");
+      }
+    });
+
+  </script>
+</body>
+
+</html>

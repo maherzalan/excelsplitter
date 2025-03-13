@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+
+<head>
+    <title>تقسيم ملف الطلاب حسب المناطق</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.8;
+            background-color: #f0f8ff;
+            padding: 20px;
+            color: #2c3e50;
+            direction: rtl;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: right;
+        }
+
+        h2,
+        h3 {
+            color: #3498db;
+        }
+
+        ul {
+            padding-right: 20px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #3498db;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+
+        .download-link {
+            display: block;
+            margin: 10px 0;
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .download-link:hover {
+            text-decoration: underline;
+        }
+
+        .column-selector {
+            margin: 10px 0;
+        }
+
+        .column-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .column-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .column-list input[type="checkbox"] {
+            margin-left: 10px;
+        }
+
+        .column-list input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            margin-bottom: 10px;
+        }
+
+        .column-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: move;
+        }
+
+        .column-list select {
+            margin-left: 10px;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>📊 وصف السكربت وآلية العمل</h2>
+        <p>هذا السكربت يساعدك في إنشاء ملفات Excel مصنفة حسب المناطق التعليمية والمدارس من ملف الطلاب المُحمّل.</p>
+
+        <h3>🔹 آلية العمل:</h3>
+        <ul>
+            <li>تحميل ملف الطلاب عبر زر التحميل.</li>
+            <li>اختيار الأعمدة المراد تصديرها.</li>
+            <li>اختيار الأعمدة التي سيتم التقسيم بناءً عليها وتحديد نوع التقسيم لكل عمود.</li>
+            <li>إعادة ترتيب الأعمدة وتحديد عرضها.</li>
+            <li>تصنيف الطلاب وفقًا للأعمدة المحددة باستخدام مكتبة <code>XLSX</code>.</li>
+            <li>إنشاء ملفات إكسل تحتوي على أوراق عمل لكل مجموعة مع إضافة تاريخ اليوم لاسم الملف.</li>
+        </ul>
+
+        <h3>🔹 تعليمات الاستخدام:</h3>
+        <ul>
+            <li>اضغط على زر “تحميل ملف الطلاب” وحدد ملف Excel.</li>
+            <li>اختر الأعمدة التي تريد تصديرها من القائمة.</li>
+            <li>اختر الأعمدة التي سيتم التقسيم بناءً عليها وحدد نوع التقسيم لكل عمود (مجلد، ملف Excel، أو ورقة داخل
+                ملف).</li>
+            <li>قم بسحب وإسقاط العناصر لإعادة ترتيب الأعمدة.</li>
+            <li>حدد عرض كل عمود باستخدام الحقل المخصص.</li>
+            <li>اضغط على زر “معالجة الملف” لبدء التصنيف والتصدير.</li>
+            <li>ستظهر روابط تنزيل الملفات المصنفة حسب الأعمدة المحددة.</li>
+            <li>استخدم زر "تنزيل الكل" لتنزيل جميع الملفات في أرشيف مضغوط.</li>
+        </ul>
+
+
+
+        <input type="file" id="fileInput" onchange="loadColumns()" />
+        <div id="columnSelector" class="column-selector" style="display: none;">
+            <h3>🔹 اختر الأعمدة المراد تصديرها:</h3>
+            <ul id="columnList" class="column-list"></ul>
+            <h3  style="display: none;">🔹 اختر الأعمدة التي سيتم التقسيم بناءً عليها:</h3>
+            <ul id="splitColumnList" class="column-list"  style="display: none;" ></ul>
+        </div>
+        <button onclick="processFile2()">🚀 تقسيم الملف كشوفات (المنطقة التعليمية - المدرسة - الصف - الشعبة)</button>
+        <button onclick="processFile1()">🚀 تقسيم الملف كشوفات (المنطقة التعليمية - الصف)</button>
+        <button onclick="processFile3()" >🚀 تقسيم الملف كشوفات (مركز التوزيع - نوع السلة الغذائية)</button>
+        <div id="searchSection" style="display: none;">
+            <h3>🔍 بحث عن طالب:</h3>
+            <input type="text" id="searchInput" placeholder="ابحث برقم التعريف، الاسم، أو رقم الطالب..." />
+
+            <label>
+                <input type="radio" name="searchType" value="exact" > بحث دقيق
+            </label>
+            <label>
+                <input type="radio" name="searchType" value="partial" checked > بحث جزئي
+            </label>
+
+            <button onclick="searchStudent()">بحث</button>
+
+            <h3>نتائج البحث:</h3>
+            <table id="searchResults" class="display" style="width:100%">
+                <thead>
+                    <tr id="searchResultsHeader">
+                        <!-- سيتم ملء رأس الجدول بالأعمدة المحددة للتصدير -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- سيتم ملء هذا الجدول بنتائج البحث -->
+                </tbody>
+            </table>
+        </div>
+
+        <button id="downloadAllButton" style="display: none;" onclick="downloadAll()">📥 تنزيل الكل</button>
+        <h3>📂 روابط الملفات المتاحة للتنزيل:</h3>
+        <div id="downloadLinks" class="link-list"></div>
+    </div>
+
+    <footer>
+        جميع الحقوق محفوظة لدى Mr.Maher Zalan | 📞 0599535638
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <!-- DataTables Buttons -->
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
