@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>نظام الإحصاءات التعليمية المتقدم</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* أنماط التصميم السابق */
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.8;
+      background-color: #f0f8ff;
+      padding: 20px;
+      color: #2c3e50;
+      direction: rtl;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      text-align: right;
+    }
+
+    h1, h2, h3 {
+      color: #3498db;
+    }
+
+    .stats-box {
+      border: 2px solid #3498db;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 15px 0;
+      background-color: #f8f9fa;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .percentage {
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #3498db;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin: 5px 0;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .instructions {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      background-color: #fdfdfd;
+    }
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>نظام الإحصاءات التعليمية المتكامل</h1>
+    
+    <!-- قسم التعليمات -->
+    <div class="instructions">
+      <h2>🎓 دليل الاستخدام</h2>
+      <h3>خطوات العمل:</h3>
+      <ol>
+        <li>انقر على زر "اختيار ملف Excel" وحدد الملف المطلوب</li>
+        <li>انتظر حتى يتم معالجة البيانات (ستظهر النتائج تلقائيًا)</li>
+        <li>استخدم النتائج المعروضة للتحليل الإحصائي</li>
+      </ol>
+
+      <h3>مفاتيح قراءة النتائج:</h3>
+      <ul>
+        <li>العدد: يمثل عدد الطلاب الذين تقدموا للاختبار</li>
+        <li>النسبة: النسبة المئوية من إجمالي الطلاب في نفس التصنيف</li>
+        <li>المرحلة: تمثل الصف الدراسي أو المستوى التعليمي</li>
+        <li>المنطقة: التقسيم الجغرافي للمدارس</li>
+      </ul>
+    </div>
+
+    <!-- واجهة التحكم -->
+    <div class="controls">
+      <input type="file" id="excelFile" accept=".xlsx, .xls">
+      <button onclick="processFile()">عرض الإحصائيات</button>
+    </div>
+
+    <!-- قسم النتائج -->
+    <div id="statsResult"></div>
+  </div>
+  <footer>
+    جميع الحقوق محفوظة لدى Mr.Maher Zalan | 📞 0599535638
+  </footer>
+  <script>
+    // الكود السابق مع تعديلات طفيفة
+    function processFile() {
+      const file = document.getElementById('excelFile').files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const allStats = { stages: {}, regions: {} };
+
+        workbook.SheetNames.forEach(sheetName => {
+          if (sheetName.toLowerCase() === 'alldata') return;
+
+          const sheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+          
+          const stageStats = {
+            totalStudents: jsonData.length,
+            subjects: {},
+            regionData: {}
+          };
+
+          jsonData.forEach(row => {
+            const tests = (row["الاختبارات التي تقدم لها"] || "")
+              .split(/[,،]\s*/)
+              .map(t => t.trim())
+              .filter(t => t);
+
+            tests.forEach(test => {
+              stageStats.subjects[test] = (stageStats.subjects[test] || 0) + 1;
+            });
+
+            const region = row["المنطقة التعليمية"] || "غير محدد";
+            if (!stageStats.regionData[region]) {
+              stageStats.regionData[region] = { total: 0, subjects: {} };
+            }
+            stageStats.regionData[region].total++;
+            
+            tests.forEach(test => {
+              stageStats.regionData[region].subjects[test] = 
+                (stageStats.regionData[region].subjects[test] || 0) + 1;
+            });
+          });
+
+          allStats.stages[sheetName] = stageStats;
+
+          Object.entries(stageStats.regionData).forEach(([region, data]) => {
+            if (!allStats.regions[region]) {
+              allStats.regions[region] = { total: 0, subjects: {} };
+            }
+            allStats.regions[region].total += data.total;
+            
+            Object.entries(data.subjects).forEach(([test, count]) => {
+              allStats.regions[region].subjects[test] = 
+                (allStats.regions[region].subjects[test] || 0) + count;
+            });
+          });
+        });
+
+        displayResults(allStats);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function displayResults(stats) {
+      const resultDiv = document.getElementById('statsResult');
+      resultDiv.innerHTML = '';
+
+      Object.entries(stats.stages).forEach(([stageName, stageData]) => {
+        const stageBox = document.createElement('div');
+        stageBox.className = 'stats-box';
+        
+        let content = `
+          <h2>المرحلة: ${stageName}</h2>
+          <p>إجمالي الطلاب: ${stageData.totalStudents}</p>
+          <table>
+            <tr><th>المادة</th><th>العدد</th><th>النسبة</th></tr>
+        `;
+
+        Object.entries(stageData.subjects).forEach(([test, count]) => {
+          const percentage = ((count / stageData.totalStudents) * 100).toFixed(2);
+          content += `
+            <tr>
+              <td>${test}</td>
+              <td>${count}</td>
+              <td><span class="percentage">${percentage}%</span></td>
+            </tr>
+          `;
+        });
+
+        content += `</table>`;
+        stageBox.innerHTML = content;
+        resultDiv.appendChild(stageBox);
+      });
+
+      const regionBox = document.createElement('div');
+      regionBox.className = 'stats-box';
+      let regionContent = `<h2>الإحصائيات العامة حسب المنطقة</h2>`;
+
+      Object.entries(stats.regions).forEach(([region, data]) => {
+        regionContent += `
+          <h3>المنطقة: ${region}</h3>
+          <p>إجمالي الطلاب: ${data.total}</p>
+          <table>
+            <tr><th>المادة</th><th>العدد</th><th>النسبة</th></tr>
+        `;
+
+        Object.entries(data.subjects).forEach(([test, count]) => {
+          const percentage = ((count / data.total) * 100).toFixed(2);
+          regionContent += `
+            <tr>
+              <td>${test}</td>
+              <td>${count}</td>
+              <td><span class="percentage">${percentage}%</span></td>
+            </tr>
+          `;
+        });
+
+        regionContent += `</table>`;
+      });
+
+      regionBox.innerHTML = regionContent;
+      resultDiv.appendChild(regionBox);
+    }
+  </script>
+</body>
+</html>
