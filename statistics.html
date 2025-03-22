@@ -5,7 +5,6 @@
   <title>نظام الإحصاءات التعليمية المتقدم</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    /* أنماط التصميم السابق */
     body {
       font-family: 'Arial', sans-serif;
       line-height: 1.8;
@@ -81,6 +80,7 @@
       margin-bottom: 20px;
       background-color: #fdfdfd;
     }
+
     footer {
       margin-top: 20px;
       font-size: 14px;
@@ -101,6 +101,7 @@
         <li>انقر على زر "اختيار ملف Excel" وحدد الملف المطلوب</li>
         <li>انتظر حتى يتم معالجة البيانات (ستظهر النتائج تلقائيًا)</li>
         <li>استخدم النتائج المعروضة للتحليل الإحصائي</li>
+        <li>انقر على زر "تنزيل القائمة" لتحميل بيانات الطلاب غير الممتحنين</li>
       </ol>
 
       <h3>مفاتيح قراءة النتائج:</h3>
@@ -109,6 +110,7 @@
         <li>النسبة: النسبة المئوية من إجمالي الطلاب في نفس التصنيف</li>
         <li>المرحلة: تمثل الصف الدراسي أو المستوى التعليمي</li>
         <li>المنطقة: التقسيم الجغرافي للمدارس</li>
+        <li>غير ممتحنين: الطلاب الذين لم يتقدموا لأي اختبار</li>
       </ul>
     </div>
 
@@ -124,8 +126,10 @@
   <footer>
     جميع الحقوق محفوظة لدى Mr.Maher Zalan | 📞 0599535638
   </footer>
+
   <script>
-    // الكود السابق مع تعديلات طفيفة
+    let allStats = {};
+
     function processFile() {
       const file = document.getElementById('excelFile').files[0];
       if (!file) return;
@@ -134,7 +138,11 @@
       reader.onload = function(e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        const allStats = { stages: {}, regions: {} };
+        allStats = { 
+          stages: {}, 
+          regions: {},
+          nonTestedStudents: []
+        };
 
         workbook.SheetNames.forEach(sheetName => {
           if (sheetName.toLowerCase() === 'alldata') return;
@@ -145,7 +153,8 @@
           const stageStats = {
             totalStudents: jsonData.length,
             subjects: {},
-            regionData: {}
+            regionData: {},
+            nonTested: 0
           };
 
           jsonData.forEach(row => {
@@ -153,6 +162,20 @@
               .split(/[,،]\s*/)
               .map(t => t.trim())
               .filter(t => t);
+
+            // جمع بيانات الطلاب غير الممتحنين
+            if (tests.length === 0) {
+              allStats.nonTestedStudents.push({
+                'رقم الهوية': row['National Id'],
+                'المنطقة التعليمية': row['المنطقة التعليمية'],
+                'المدرسة': row['المدرسة'],
+                'الصف': row['الصف'],
+                'الشعبة': row['Section Name Id'],
+                'الجنس': row['Gender'],
+                'الجوال': row['Mobile']
+              });
+              stageStats.nonTested++;
+            }
 
             tests.forEach(test => {
               stageStats.subjects[test] = (stageStats.subjects[test] || 0) + 1;
@@ -194,6 +217,17 @@
       const resultDiv = document.getElementById('statsResult');
       resultDiv.innerHTML = '';
 
+      // إضافة قسم الطلاب غير الممتحنين
+      const nonTestedBox = document.createElement('div');
+      nonTestedBox.className = 'stats-box';
+      nonTestedBox.innerHTML = `
+        <h2>الطلاب غير الممتحنين</h2>
+        <p>إجمالي الطلاب الذين لم يتقدموا لأي اختبار: ${stats.nonTestedStudents.length}</p>
+        <button onclick="downloadNonTested()">تنزيل القائمة</button>
+      `;
+      resultDiv.appendChild(nonTestedBox);
+
+      // عرض إحصائيات المراحل
       Object.entries(stats.stages).forEach(([stageName, stageData]) => {
         const stageBox = document.createElement('div');
         stageBox.className = 'stats-box';
@@ -201,6 +235,7 @@
         let content = `
           <h2>المرحلة: ${stageName}</h2>
           <p>إجمالي الطلاب: ${stageData.totalStudents}</p>
+          <p>الطلاب غير الممتحنين: ${stageData.nonTested}</p>
           <table>
             <tr><th>المادة</th><th>العدد</th><th>النسبة</th></tr>
         `;
@@ -221,6 +256,7 @@
         resultDiv.appendChild(stageBox);
       });
 
+      // عرض الإحصائيات العامة للمناطق
       const regionBox = document.createElement('div');
       regionBox.className = 'stats-box';
       let regionContent = `<h2>الإحصائيات العامة حسب المنطقة</h2>`;
@@ -249,6 +285,34 @@
 
       regionBox.innerHTML = regionContent;
       resultDiv.appendChild(regionBox);
+    }
+
+    function downloadNonTested() {
+      if (allStats.nonTestedStudents.length === 0) {
+        alert("لا يوجد طلاب غير ممتحنين");
+        return;
+      }
+
+      const wsData = [
+        ['رقم الهوية', 'المنطقة التعليمية', 'المدرسة', 'الصف', 'الشعبة', 'الجنس', 'الجوال']
+      ];
+      
+      allStats.nonTestedStudents.forEach(student => {
+        wsData.push([
+          student['رقم الهوية'],
+          student['المنطقة التعليمية'],
+          student['المدرسة'],
+          student['الصف'],
+          student['الشعبة'],
+          student['الجنس'],
+          student['الجوال']
+        ]);
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, "غير ممتحنين");
+      XLSX.writeFile(wb, "الطلاب_غير_الممتحنين.xlsx");
     }
   </script>
 </body>
