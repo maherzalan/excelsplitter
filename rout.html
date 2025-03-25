@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بوابة الاختبارات النهائية - مناطق قطاع غزة</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #009edb;
+      --secondary-color: #0072a3;
+      --accent-color: #e74c3c;
+      --special-color: #9C27B0;
+    }
+
+    body {
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+
+    .header-section {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .instruction-card {
+      border-left: 4px solid var(--secondary-color);
+      background: rgba(0, 126, 163, 0.05);
+    }
+
+    .area-card {
+      border: none;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .area-card.special-card {
+      border: 2px solid var(--special-color);
+      background: rgba(156, 39, 176, 0.05);
+    }
+
+    .area-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .area-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--secondary-color);
+    }
+
+    .btn-custom {
+      background: var(--secondary-color);
+      color: white;
+      padding: 8px 25px;
+      border-radius: 25px;
+      transition: all 0.3s;
+    }
+
+    .additional-links {
+      border-top: 1px solid #eee;
+      margin-top: 15px;
+      padding-top: 15px;
+    }
+    
+    .link-item {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.3s;
+      text-decoration: none;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .link-item:hover {
+      background: rgba(0, 126, 163, 0.05);
+      transform: translateX(5px);
+    }
+    
+    .link-icon {
+      width: 30px;
+      text-align: center;
+      margin-left: 10px;
+    }
+    
+    .link-badge {
+      font-size: 0.8em;
+      padding: 2px 8px;
+      border-radius: 15px;
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .emergency-alert {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="py-4">
+  <div class="container">
+    <header class="header-section text-white p-4 mb-4">
+      <div class="text-center">
+        <h1 class="mb-3">
+          <i class="fas fa-graduation-cap"></i>
+          بوابة الاختبارات النهائية
+        </h1>
+        <p class="mb-0">اختر منطقتك التعليمية للوصول لنموذج الاختبار</p>
+      </div>
+    </header>
+
+    <div class="instruction-card alert alert-info mb-4">
+      <h4 class="alert-heading">
+        <i class="fas fa-info-circle me-2"></i>
+        إرشادات هامة:
+      </h4>
+      <ul class="mb-0">
+        <li>بيانات الطلاب متاحة للتحميل بصيغة Excel</li>
+        <li>روابط الاختبارات متاحة بصيغة JSON للاستخدام البرمجي</li>
+        <li class="text-danger">المنطقة <strong>البنفسجية</strong> مخصصة للطلاب من المدارس الحكومية والخاصة</li>
+      </ul>
+    </div>
+
+    <div class="row g-4 mt-4" id="areas-container"></div>
+
+    <footer class="mt-5 p-3 text-center border-top">
+      <p class="text-muted small">
+        <i class="fas fa-shield-alt"></i>
+        جميع الحقوق محفوظة © 2025 وكالة الغوث الدولية
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const areas = [
+      { 
+        name: "بيت لاهيا وبيت حانون", 
+        mainUrl: "https://bit.ly/4kN5Xho",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1yDXj0g_eXKcCGna6qCLJOm-jCruessbAMKzx6gUBaX8/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/1O3LDLSwn3KCO781OEEmTMrAZU__ywokf",
+        isSpecial: false
+      },
+      { 
+        name: "غرب الوسطى",
+        mainUrl: "https://bit.ly/4kTQsEz",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1tG7ZuhKPc6NqFy1imJFCqoEbLqUsA4vCSHRyiI2qyl0/edit?usp=drive_web&ouid=103000885831009942266",
+        testLinksUrl: "https://drive.google.com/drive/folders/1UqXaiHTYfPtYqT50n3XKkSruco9EyYvV",
+        isSpecial: false
+      },
+      { 
+        name: "شرق الوسطى",
+        mainUrl: "https://bit.ly/4iFX5bA",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1DiMnequcQYDtnHjCmcLyZW576z-y4r5Py6gsIvs6Zf8/edit?usp=drive_web&ouid=103000885831009942266",
+        testLinksUrl: "https://drive.google.com/drive/folders/1i2BssJ6M4Q7bMSJcO6QPLwjfWaxigzWX",
+        isSpecial: false
+      },
+      { 
+        name: "جباليا",
+        mainUrl: "https://bit.ly/4bYht5x",
+        excelUrl: "https://docs.google.com/spreadsheets/d/16c5DhDouRdBTQ5p7hvYFkEotehiqgtReo6yh6Ua2t_A/edit?usp=drive_web&ouid=103000885831009942266",
+        testLinksUrl: "https://drive.google.com/drive/folders/1YqHCtZPamvylGLlPIfZVHT0zXoHjFlFP",
+        isSpecial: false
+      },
+      { 
+        name: "شرق غزة",
+        mainUrl: "https://bit.ly/4kMeyAX",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1ysZ2Z1jgzy7HrTCw9nM0l9c9uPl8QkRzS7TH3a5s0a8/edit?gid=343446130#gid=343446130",
+        testLinksUrl: "https://drive.google.com/drive/folders/1rScj8vYYCMudCrV_hMUi6DGNJJuviFc6",
+        isSpecial: false
+      },
+      { 
+        name: "جنوب غزة",
+        mainUrl: "https://bit.ly/4iPJpuM",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1a9cl8aZPo67i50Q7uf1znIls9mJHT1tLIxggBhhvYeQ/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/1llffS6t0KeDdkzgAPf4COle6MY-1yuLo",
+        isSpecial: false
+      },
+      { 
+        name: "غرب خانيونس",
+        mainUrl: "https://bit.ly/4kIJL8d",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1-q0hIwMz7vNX6qoAnBdO4mrngIuoBMNGkAsYQTVu1eY/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/1Ls9VARSd7gDk5MUuE0viXkqbTWp5e1U5",
+        isSpecial: false
+      },
+      { 
+        name: "شرق خانيونس",
+        mainUrl: "https://bit.ly/4kIKiqJ",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1eChSJCBMC6XhuiwMePbY5XoiMg6ZfnClRoNS3nClRf0/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/1OrDNsOAyOAjdwKJ32X_NjYSiy1k0GwfI",
+        isSpecial: false
+      },
+      { 
+        name: "غرب غزة",
+        mainUrl: "https://bit.ly/4bV5rKm",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1YASnGEqNfte9clGQIIyTbRlK1f0yBfARL7LGiCRjIKg/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/1F-KSZZVfBkwWcwuq2_tQqZutcvaSqrAm",
+        isSpecial: false
+      },
+      { 
+        name: "شمال رفح",
+        mainUrl: "https://bit.ly/4bNcaG9",
+        excelUrl: "https://docs.google.com/spreadsheets/d/104Vc73Xg8goQc1a6nj-ysiiHQ8a55RDptcnCtP12i-w/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/19VvPFkxWhd4vN2wdFP78R6gYYrD9JYbk",
+        isSpecial: false
+      },
+      { 
+        name: "جنوب رفح",
+        mainUrl: "https://bit.ly/4iO6qya",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1jMDPLgRucvenf-zxjjww2yB1qoZgrli8AG3UVvTb5F0/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/1WSiIa0Z3WTcHysOrTEQvTJshr0ap6sN6",
+        isSpecial: false
+      },
+      { 
+        name: "المنطقة الافتراضية",
+        mainUrl: "https://bit.ly/41VQ2F4",
+        excelUrl: "https://docs.google.com/spreadsheets/d/1z9iDHhOSozZg8mfJGBx9c3Issp7nf1Sc93nToPNRDJE/edit?usp=drive_web&ouid=103000885831009942266",
+        testLinksUrl: "https://drive.google.com/drive/folders/16nJG89n_16CLxQH-6tTAGjf90fs30_mV",
+        isSpecial: true,
+        description: "مخصص للطلاب من المدارس الحكومية والخاصة"
+      },
+      { 
+        name: "الصف التاسع جميع المناطق",
+        mainUrl: "https://bit.ly/42aPRG3",
+        excelUrl: "https://docs.google.com/spreadsheets/d/13rUlS8ZgN5yJQkDYThbYvSvdGfXaxiG5Zi0WyZA1I_A/edit",
+        testLinksUrl: "https://drive.google.com/drive/folders/1HxhOtKly8urwdE92i78PzLJ_RSWYwCLT",
+        isSpecial: true,
+        description: "اختبار الصف التاسع لجميع المناطق"
+      }
+    ];
+
+    const container = document.getElementById('areas-container');
+
+    areas.forEach(area => {
+      const col = document.createElement('div');
+      col.className = "col-xl-3 col-lg-4 col-md-6";
+      
+      const cardClass = area.isSpecial ? "area-card special-card" : "area-card";
+      const btnClass = area.isSpecial ? "btn-custom special-btn" : "btn-custom";
+      
+      col.innerHTML = `
+        <div class="${cardClass} h-100 p-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <i class="fas fa-map-marker-alt text-secondary me-2"></i>
+              <h5 class="card-title mb-0">${area.name}</h5>
+            </div>
+            
+            ${area.description ? `<p class="text-muted small">${area.description}</p>` : ''}
+            
+            <div class="d-grid gap-2 mb-3">
+              <a href="${area.mainUrl}" target="_blank" class="${btnClass}">
+                <i class="fas fa-external-link-alt me-2"></i>فتح النموذج
+              </a>
+            </div>
+            
+            <div class="additional-links">
+              <a href="${area.excelUrl}" class="link-item" download>
+                <span class="link-icon text-success">
+                  <i class="fas fa-file-excel"></i>
+                </span>
+                <span class="flex-grow-1">
+                  بيانات الطلاب 
+                  <span class="link-badge">xlsx</span>
+                </span>
+              </a>
+              
+              <a href="${area.testLinksUrl}" class="link-item" target="_blank">
+                <span class="link-icon text-primary">
+                  <i class="fas fa-link"></i>
+                </span>
+                <span class="flex-grow-1">
+                  روابط الاختبارات
+                  <span class="link-badge">json</span>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(col);
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
