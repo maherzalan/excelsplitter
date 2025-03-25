@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+  <meta charset="UTF-8">
+  <title>إحصائيات الإجابات - دمج التفاصيل</title>
+  <!-- تضمين مكتبة SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- تضمين مكتبة Sortable.js للسحب والإفلات -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.8;
+      background-color: #f0f8ff;
+      padding: 20px;
+      color: #2c3e50;
+      direction: rtl;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      text-align: right;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #3498db;
+    }
+
+    ul {
+      list-style: none;
+      padding-right: 20px;
+      margin-bottom: 20px;
+    }
+
+    ul li {
+      padding: 8px;
+      border: 1px solid #ddd;
+      margin-bottom: 5px;
+      background: #f9f9f9;
+      cursor: move;
+      display: flex;
+      align-items: center;
+    }
+
+    ul li input[type="checkbox"] {
+      margin-left: 10px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #3498db;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin: 5px 0;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    input[type="file"],
+    input[type="number"],
+    select {
+      margin-bottom: 15px;
+    }
+
+    #progressContainer {
+      width: 100%;
+      background-color: #eee;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+
+    #progressBar {
+      width: 0%;
+      height: 20px;
+      background-color: #3498db;
+      text-align: center;
+      color: white;
+      line-height: 20px;
+      transition: width 0.3s;
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+      text-align: center;
+    }
+
+    .instructions,
+    .mergeOptions,
+    .idMergeOptions,
+    .detailsMergeOptions {
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 8px;
+      background: #fdfdfd;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>إحصائيات الإجابات وكل التفاصيل</h1>
+    <!-- قسم الوصف والتعليمات -->
+    <div class="instructions">
+      <h2>📊 وصف السكربت وآلية العمل</h2>
+      <p>
+        هناك ثلاث طرق لدمج ملفات Excel:
+      </p>
+      <ul>
+        <li>الدمج العادي مع إضافة اسم الملف والاعمدة المختارة.</li>
+        <li>دمج الملفات حسب رقم الهوية بحيث يتم توزيع الدرجات وإضافة عمود الحالة (مكتمل/غير مكتمل).</li>
+        <li>دمج التفاصيل: حيث يحتوي الملف الأساسي (الأول) على رقم الهوية وبعض البيانات مثل العلامات، والملفات الأخرى
+          تحتوي على بيانات إضافية (كالاسم، المنطقة التعليمية، المدرسة، الصف، الشعبة، رقم الجوال… إلخ). سيتم دمج هذه
+          الملفات بحيث يظهر لكل رقم هوية كافة التفاصيل من جميع الملفات.</li>
+      </ul>
+      <ol>
+        <li>اختر ملفات Excel باستخدام زر "اختيار الملفات".</li>
+        <li>حدد عدد صفوف الهيدر التي سيتم تجاهلها (لتحديد صف العناوين المناسب).</li>
+        <li>عند تحميل الملفات، سيتم استخراج صف الهيدر من الملف الأول وتعبئة قائمة الأعمدة وكذلك قائمة اختيار عمود
+          المفتاح للدمج التفصيلي.</li>
+        <li>اضغط الزر المناسب للدمج (الدمج العادي، دمج حسب رقم الهوية، أو دمج التفاصيل).</li>
+      </ol>
+    </div>
+
+    <!-- إعدادات عامة للدمج -->
+    <div class="mergeOptions">
+      <label for="headerRows">عدد صفوف الهيدر (التي سيتم تجاهلها): </label>
+      <input type="number" id="headerRows" value="0" min="0" step="1">
+      <br>
+      <!-- قائمة الأعمدة للدمج العادي -->
+      <div id="columnSelector" style="display: none;">
+        <h3>تحديد وترتيب الأعمدة (السحب لتغيير الترتيب):</h3>
+        <ul id="columnsList"></ul>
+      </div>
+      <button id="downloadAllFiles">دمج الملفات (الدمج العادي)</button>
+    </div>
+
+    <!-- إعدادات دمج حسب رقم الهوية (كما في الكود السابق) -->
+    <div class="idMergeOptions" style="display: none;">
+      <h3>دمج الملفات حسب رقم الهوية</h3>
+      <label for="keyColumnSelect">اختر عمود رقم الهوية:</label>
+      <select id="keyColumnSelect"></select>
+      <br>
+      <label for="valueColumnSelect">اختر عمود الدرجة:</label>
+      <select id="valueColumnSelect"></select>
+      <br>
+      <button id="mergeById">دمج الملفات حسب رقم الهوية</button>
+    </div>
+
+    <!-- إعدادات دمج التفاصيل -->
+    <div class="detailsMergeOptions" style="display: none;">
+      <h3>دمج التفاصيل بناءً على رقم الهوية</h3>
+      <label for="keyColumnDetails">اختر عمود رقم الهوية (من الملف الأساسي):</label>
+      <select id="keyColumnDetails"></select>
+      <br>
+      <p>
+        سيتم اعتبار الملف الأول كملف أساسي يحتوي على بيانات (مثل العلامات)، وتُضاف له بيانات من الملفات الأخرى (مثل
+        الاسم والمنطقة التعليمية والمدرسة …).
+      </p>
+      <button id="mergeDetails">دمج التفاصيل</button>
+    </div>
+
+    <!-- قسم تحميل الملفات -->
+    <h2>تحميل الملفات</h2>
+    <input type="file" multiple id="fileInput" accept=".xls,.xlsx">
+    <br>
+    <!-- شريط التقدم -->
+    <div id="progressContainer">
+      <div id="progressBar">0%</div>
+    </div>
+  </div>
+
+  <footer>
+    جميع الحقوق محفوظة لدى Mr.Maher Zalan | 📞 0599535638
+  </footer>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const columnsList = document.getElementById('columnsList');
+    const columnSelector = document.getElementById('columnSelector');
+    const progressBar = document.getElementById('progressBar');
+    const idMergeOptions = document.querySelector('.idMergeOptions');
+    const detailsMergeOptions = document.querySelector('.detailsMergeOptions');
+    const keyColumnSelect = document.getElementById('keyColumnSelect');
+    const valueColumnSelect = document.getElementById('valueColumnSelect');
+    const keyColumnDetails = document.getElementById('keyColumnDetails');
+    let headerColumns = []; // تخزين أسماء الأعمدة من الملف الأول
+    let selectedColumns = []; // للدمج العادي
+
+    // عند اختيار الملفات، نستخلص صف الهيدر من الملف الأول بناءً على عدد الصفوف المُدخلة
+    fileInput.addEventListener('change', function () {
+      const files = fileInput.files;
+      if (!files.length) return;
+      const headerRowsCount = parseInt(document.getElementById('headerRows').value, 10);
+      const firstFile = files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const data = e.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+        // استخدام الصف المحدد بواسطة headerRowsCount كصف للعناوين إن وُجد، وإلا الصف الأول
+        if (headerRowsCount > 0 && jsonData.length > headerRowsCount) {
+          headerColumns = jsonData[headerRowsCount];
+          jsonData = jsonData.slice(headerRowsCount);
+        } else {
+          headerColumns = jsonData[0];
+        }
+        console.log("بيانات الهيدر:", headerColumns);
+        if (!headerColumns || headerColumns.length === 0) {
+          alert("⚠️ صف الهيدر فارغ! يرجى التأكد من الملف أو تعديل عدد صفوف الهيدر.");
+          columnSelector.style.display = 'none';
+          idMergeOptions.style.display = 'none';
+          detailsMergeOptions.style.display = 'none';
+          return;
+        }
+        // بناء قائمة الأعمدة للدمج العادي
+        buildColumnsList(headerColumns);
+        columnSelector.style.display = 'block';
+        // تعبئة خيارات الدمج حسب رقم الهوية
+        populateSelectOptions(headerColumns);
+        idMergeOptions.style.display = 'block';
+        // تعبئة قائمة عمود المفتاح للدمج التفصيلي (من الملف الأساسي)
+        populateKeyDetailsOptions(headerColumns);
+        detailsMergeOptions.style.display = 'block';
+      };
+      reader.readAsBinaryString(firstFile);
+    });
+
+    // دالة لبناء قائمة الأعمدة باستخدام عناصر <li> للدمج العادي
+    function buildColumnsList(columns) {
+      columnsList.innerHTML = '';
+      columns.forEach((col, index) => {
+        const li = document.createElement('li');
+        li.setAttribute('data-index', index);
+        li.innerHTML = `<span>${col}</span>
+                        <input type="checkbox" checked title="تحديد العمود">`;
+        columnsList.appendChild(li);
+      });
+      Sortable.create(columnsList, { animation: 150 });
+    }
+
+    // تعبئة خيارات select للدمج حسب رقم الهوية
+    function populateSelectOptions(columns) {
+      keyColumnSelect.innerHTML = '';
+      valueColumnSelect.innerHTML = '';
+      columns.forEach((col, index) => {
+        const optionKey = document.createElement('option');
+        optionKey.value = index;
+        optionKey.textContent = col;
+        keyColumnSelect.appendChild(optionKey);
+        const optionValue = document.createElement('option');
+        optionValue.value = index;
+        optionValue.textContent = col;
+        valueColumnSelect.appendChild(optionValue);
+      });
+    }
+
+    // تعبئة قائمة select لعمود المفتاح للدمج التفصيلي
+    function populateKeyDetailsOptions(columns) {
+      keyColumnDetails.innerHTML = '';
+      columns.forEach((col, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = col;
+        keyColumnDetails.appendChild(option);
+      });
+    }
+
+    // دالة لجلب ترتيب الأعمدة المختارة من قائمة <li> للدمج العادي
+    function getSelectedColumns() {
+      const lis = columnsList.querySelectorAll('li');
+      const cols = [];
+      lis.forEach(li => {
+        const checkbox = li.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+          const idx = parseInt(li.getAttribute('data-index'), 10);
+          cols.push({ index: idx, name: headerColumns[idx] });
+        }
+      });
+      return cols;
+    }
+
+    // زر الدمج العادي (مع إضافة اسم الملف في العمود الأول)
+    document.getElementById('downloadAllFiles').addEventListener('click', function () {
+      const files = fileInput.files;
+      const headerRowsCount = parseInt(document.getElementById('headerRows').value, 10);
+      if (!files.length) {
+        alert('الرجاء اختيار ملفات Excel');
+        return;
+      }
+      selectedColumns = getSelectedColumns();
+      if (!selectedColumns.length) {
+        alert("الرجاء اختيار عمود واحد على الأقل من قائمة الأعمدة.");
+        return;
+      }
+      let mergedData = [];
+      let processedCount = 0;
+      const totalFiles = files.length;
+      function updateProgress() {
+        const percent = Math.round((processedCount / totalFiles) * 100);
+        progressBar.style.width = percent + '%';
+        progressBar.textContent = percent + '%';
+      }
+      Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          if (index === 0) {
+            if (headerRowsCount > 0 && jsonData.length > headerRowsCount) {
+              jsonData = jsonData.slice(headerRowsCount);
+            }
+          } else {
+            if (headerRowsCount > 0) {
+              jsonData = jsonData.slice(headerRowsCount);
+            }
+          }
+          jsonData = jsonData.map((row, rowIndex) => {
+            if (index === 0 && rowIndex === 0) {
+              return ['اسم الملف', ...row];
+            } else {
+              return [file.name, ...row];
+            }
+          });
+          if (index === 0) {
+            const newHeader = ['اسم الملف'];
+            selectedColumns.forEach(col => {
+              newHeader.push(col.name);
+            });
+            jsonData[0] = newHeader;
+            jsonData = jsonData.map((row, idx) => {
+              if (idx === 0) return row;
+              const newRow = [row[0]];
+              selectedColumns.forEach(col => {
+                newRow.push(row[col.index + 1] || '');
+              });
+              return newRow;
+            });
+          } else {
+            jsonData = jsonData.map(row => {
+              const newRow = [row[0]];
+              selectedColumns.forEach(col => {
+                newRow.push(row[col.index + 1] || '');
+              });
+              return newRow;
+            });
+          }
+          mergedData = mergedData.concat(jsonData);
+          processedCount++;
+          updateProgress();
+          if (processedCount === totalFiles) {
+            if (mergedData.length === 0) {
+              alert("⚠️ لم يتم العثور على بيانات في الملفات المحددة!");
+              return;
+            }
+            const newSheet = XLSX.utils.aoa_to_sheet(mergedData);
+            const newWorkbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(newWorkbook, newSheet, 'Merged');
+            XLSX.writeFile(newWorkbook, 'merged.xlsx');
+          }
+        };
+        reader.readAsBinaryString(file);
+      });
+    });
+
+    // زر دمج الملفات حسب رقم الهوية (مع عمود الحالة)
+    document.getElementById('mergeById').addEventListener('click', function () {
+      const files = fileInput.files;
+      const headerRowsCount = parseInt(document.getElementById('headerRows').value, 10);
+      if (!files.length) {
+        alert('الرجاء اختيار ملفات Excel');
+        return;
+      }
+      const keyColIndex = parseInt(keyColumnSelect.value, 10);
+      const valueColIndex = parseInt(valueColumnSelect.value, 10);
+      let mergedById = {}; // لتجميع البيانات بناءً على المفتاح
+      let fileNames = []; // لتخزين أسماء الملفات
+      let processedCount = 0;
+      const totalFiles = files.length;
+      function updateProgress() {
+        const percent = Math.round((processedCount / totalFiles) * 100);
+        progressBar.style.width = percent + '%';
+        progressBar.textContent = percent + '%';
+      }
+      Array.from(files).forEach((file, index) => {
+        fileNames.push(file.name);
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          if (headerRowsCount > 0 && jsonData.length > headerRowsCount) {
+            jsonData = jsonData.slice(headerRowsCount);
+          } else {
+            jsonData = jsonData.slice(1);
+          }
+          jsonData.forEach((row) => {
+            const key = row[keyColIndex] ? row[keyColIndex].toString().trim() : '';
+            const value = row[valueColIndex] || '';
+            if (!key) return;
+            if (!mergedById[key]) {
+              mergedById[key] = { key: key };
+            }
+            mergedById[key][file.name] = value;
+          });
+          processedCount++;
+          updateProgress();
+          if (processedCount === totalFiles) {
+            const finalHeader = ['رقم الهوية', ...fileNames, "الحالة"];
+            const finalData = [finalHeader];
+            for (let k in mergedById) {
+              const row = [mergedById[k].key];
+              let complete = true;
+              fileNames.forEach(name => {
+                const val = mergedById[k][name] || '';
+                row.push(val);
+                if (!val || val.toString().trim() === '') {
+                  complete = false;
+                }
+              });
+              row.push(complete ? "مكتمل" : "غير مكتمل");
+              finalData.push(row);
+            }
+            const newSheet = XLSX.utils.aoa_to_sheet(finalData);
+            const newWorkbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(newWorkbook, newSheet, 'MergedByID');
+            XLSX.writeFile(newWorkbook, 'merged_by_id.xlsx');
+          }
+        };
+        reader.readAsBinaryString(file);
+      });
+    });
+
+    // زر دمج التفاصيل
+    document.getElementById('mergeDetails').addEventListener('click', function () {
+      const files = fileInput.files;
+      const headerRowsCount = parseInt(document.getElementById('headerRows').value, 10);
+      if (!files.length) {
+        alert('الرجاء اختيار ملفات Excel');
+        return;
+      }
+      // نعتمد أن الملف الأول هو الأساسي
+      const keyIndex = parseInt(keyColumnDetails.value, 10);
+      let primaryData = {};
+      let primaryHeader = [];
+      let processedCount = 0;
+      const totalFiles = files.length;
+
+      function updateProgress() {
+        const percent = Math.round((processedCount / totalFiles) * 100);
+        progressBar.style.width = percent + '%';
+        progressBar.textContent = percent + '%';
+      }
+
+      // قراءة الملف الأساسي (الأول)
+      const readerPrimary = new FileReader();
+      readerPrimary.onload = function (e) {
+        const data = e.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+        if (headerRowsCount > 0 && jsonData.length > headerRowsCount) {
+          primaryHeader = jsonData[headerRowsCount];
+          jsonData = jsonData.slice(headerRowsCount + 1);
+        } else {
+          primaryHeader = jsonData[0];
+          jsonData = jsonData.slice(1);
+        }
+        // بناء قاموس للملف الأساسي مع المفتاح كرقم الهوية (افتراض أن المفتاح موجود في العمود المحدد)
+        jsonData.forEach(row => {
+          const key = row[keyIndex] ? row[keyIndex].toString().trim() : '';
+          if (!key) return;
+          primaryData[key] = row;
+        });
+        processedCount++;
+        updateProgress();
+        // بعد قراءة الملف الأساسي، نستمر في قراءة الملفات الأخرى لإضافة التفاصيل
+        readSecondaryFiles();
+      };
+      readerPrimary.readAsBinaryString(files[0]);
+
+      function readSecondaryFiles() {
+        // إذا كان هناك ملف واحد فقط، ننتهي من الدمج
+        if (files.length < 2) {
+          finalizeMerge();
+          return;
+        }
+        for (let i = 1; i < files.length; i++) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const data = e.target.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+            let secHeader;
+            if (headerRowsCount > 0 && jsonData.length > headerRowsCount) {
+              secHeader = jsonData[headerRowsCount];
+              jsonData = jsonData.slice(headerRowsCount + 1);
+            } else {
+              secHeader = jsonData[0];
+              jsonData = jsonData.slice(1);
+            }
+            // لكل صف في الملف الثانوي، نبحث عن رقم الهوية ونضيف بياناته إلى السجل الأساسي
+            jsonData.forEach(row => {
+              const key = row[keyIndex] ? row[keyIndex].toString().trim() : '';
+              if (!key) return;
+              if (primaryData[key]) {
+                secHeader.forEach((colName, idx) => {
+                  // إضافة بيانات الملف الثانوي مع اسم الملف كجزء من اسم العمود
+                  primaryData[key][`${files[i].name} - ${colName}`] = row[idx] || '';
+                });
+              }
+            });
+            processedCount++;
+            updateProgress();
+            if (processedCount === totalFiles) {
+              finalizeMerge();
+            }
+          };
+          reader.readAsBinaryString(files[i]);
+        }
+      }
+
+
+      function finalizeMerge() {
+        // إعداد صف الهيدر النهائي: نبدأ بهيكل الملف الأساسي ثم نضيف الأعمدة الجديدة من الملفات الثانوية
+        let finalHeader = primaryHeader.slice(); // استخدام هيدر الملف الأساسي
+        // إضافة أسماء الأعمدة الجديدة من الملفات الثانوية
+        Object.values(primaryData).forEach(row => {
+          Object.keys(row).forEach(colName => {
+            if (!finalHeader.includes(colName)) {
+              finalHeader.push(colName);
+            }
+          });
+        });
+        const finalData = [finalHeader];
+        // بناء الصفوف النهائية وفقاً لترتيب الهيدر النهائي
+        for (let id in primaryData) {
+          const row = primaryData[id];
+          const newRow = [];
+          finalHeader.forEach(col => {
+            newRow.push(row[col] !== undefined ? row[col] : '');
+          });
+          finalData.push(newRow);
+        }
+        const newSheet = XLSX.utils.aoa_to_sheet(finalData);
+        const newWorkbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(newWorkbook, newSheet, 'DetailsMerged');
+        XLSX.writeFile(newWorkbook, 'details_merged.xlsx');
+      }
+    });
+  </script>
+</body>
+
+</html>
