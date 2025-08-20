@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدورة التعويضية - تحديد الصف</title>
+    <style>
+        body {
+            font-family: "Cairo", Arial, sans-serif;
+            background: #f0f9ff;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+            color: #0d6efd;
+        }
+
+        .question-box,
+        .result-box {
+            background: #fff;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        button {
+            margin: 10px 5px 0 0;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #3498db;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>استفسار لطلبة الوكالة حول المرحلة التعويضية</h1>
+    <h2>اكتشف الصف الذي ستكمله أو تنتقل إليه بعد الدورة التعويضية</h2>
+
+    <!-- السؤال 1 -->
+    <div class="question-box" id="q1">
+        <p>هل كنت مسجلاً في مدارس الوكالة قبل الحرب؟</p>
+        <small style="color:#555; display:block; margin-bottom:10px;">
+            مدارس الوكالة: المدارس التابعة للأونروا. إذا كنت تدرس في مدرسة حكومية أو خاصة، اختر "لا".
+        </small>
+        <label><input type="radio" name="agency" value="yes"> نعم</label>
+        <label><input type="radio" name="agency" value="no"> لا</label>
+        <button onclick="nextQuestion('q2')">التالي</button>
+    </div>
+
+    <!-- السؤال 2 -->
+    <div class="question-box hidden" id="q2">
+        <p>في أي صف كنت قبل الحرب؟</p>
+        <small style="color:#555; display:block; margin-bottom:10px;">
+            الصف الذي كنت مسجلاً فيه قبل توقف الدراسة بسبب الحرب.
+        </small>
+        <label><input type="radio" name="preWarGrade" value="1"> الصف الأول</label>
+        <label><input type="radio" name="preWarGrade" value="2"> الصف الثاني</label>
+        <label><input type="radio" name="preWarGrade" value="3"> الصف الثالث</label>
+        <label><input type="radio" name="preWarGrade" value="4"> الصف الرابع</label>
+        <label><input type="radio" name="preWarGrade" value="5"> الصف الخامس</label>
+        <label><input type="radio" name="preWarGrade" value="6"> الصف السادس</label>
+        <label><input type="radio" name="preWarGrade" value="7"> الصف السابع</label>
+        <label><input type="radio" name="preWarGrade" value="8"> الصف الثامن</label>
+        <label><input type="radio" name="preWarGrade" value="9"> الصف التاسع</label>
+        <button onclick="nextQuestion('q3')">التالي</button>
+        <button onclick="prevQuestion('q1')">السابق</button>
+    </div>
+
+    <!-- السؤال 3 -->
+    <div class="question-box hidden" id="q3">
+        <p>هل تم ترفيعك في الدورة الأولى؟</p>
+        <small style="color:#555; display:block; margin-bottom:10px;">
+            الدورة الأولى: الفترة الدراسية التي تم استكمالها مباشرة بعد توقف الدراسة بسبب الحرب.
+        </small>
+        <label><input type="radio" name="promoted1" value="yes"> نعم</label>
+        <label><input type="radio" name="promoted1" value="no"> لا</label>
+        <button onclick="nextQuestion('q4')">التالي</button>
+        <button onclick="prevQuestion('q2')">السابق</button>
+    </div>
+
+    <!-- السؤال 4 -->
+    <div class="question-box hidden" id="q4">
+        <p>الصف الذي درسته في الدورة الثانية:</p>
+        <small style="color:#555; display:block; margin-bottom:10px;">
+            الدورة الثانية: الدورة التعويضية الحالية التي تهدف لتعويض ما فاته الطالب في الدورة الأولى. اختر الصف الذي
+            درست فيه خلال هذه الدورة.
+        </small>
+        <label><input type="radio" name="secondCourseGrade" value="1"> الصف الأول</label>
+        <label><input type="radio" name="secondCourseGrade" value="2"> الصف الثاني</label>
+        <label><input type="radio" name="secondCourseGrade" value="3"> الصف الثالث</label>
+        <label><input type="radio" name="secondCourseGrade" value="4"> الصف الرابع</label>
+        <label><input type="radio" name="secondCourseGrade" value="5"> الصف الخامس</label>
+        <label><input type="radio" name="secondCourseGrade" value="6"> الصف السادس</label>
+        <label><input type="radio" name="secondCourseGrade" value="7"> الصف السابع</label>
+        <label><input type="radio" name="secondCourseGrade" value="8"> الصف الثامن</label>
+        <label><input type="radio" name="secondCourseGrade" value="9"> الصف التاسع</label>
+        <button onclick="nextQuestion('q5')">التالي</button>
+        <button onclick="prevQuestion('q3')">السابق</button>
+    </div>
+
+    <!-- السؤال 5 -->
+    <div class="question-box hidden" id="q5">
+        <p>هل تم ترفيعك في الدورة الثانية؟</p>
+        <label><input type="radio" name="promoted2" value="yes"> نعم</label>
+        <label><input type="radio" name="promoted2" value="no"> لا</label>
+        <button onclick="showFinalResult()">عرض النتيجة</button>
+        <button onclick="prevQuestion('q4')">السابق</button>
+    </div>
+
+    <!-- النتيجة -->
+    <div id="result" class="result-box hidden"></div>
+
+    <script>
+        function nextQuestion(id) {
+            document.querySelectorAll('.question-box').forEach(q => q.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function prevQuestion(id) {
+            document.querySelectorAll('.question-box').forEach(q => q.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function showFinalResult() {
+            const preWar = document.querySelector('input[name="preWarGrade"]:checked');
+            const promoted1 = document.querySelector('input[name="promoted1"]:checked');
+            const secondCourse = document.querySelector('input[name="secondCourseGrade"]:checked');
+            const promoted2 = document.querySelector('input[name="promoted2"]:checked');
+            const resultBox = document.getElementById("result");
+
+            if (!preWar || !promoted1 || !secondCourse || !promoted2) {
+                alert("الرجاء اختيار جميع الإجابات أولاً");
+                return;
+            }
+
+            const secondGrade = parseInt(secondCourse.value);
+            let finalGrade = secondGrade;
+            let instructions = "";
+
+            if (promoted2.value === "yes") {
+                finalGrade = secondGrade + 1;
+                instructions = `
+          <p class="success">📘 الصف المترفع له بعد اجتياز الدورة التعويضية: الصف ${finalGrade}</p>
+          <ol>
+            <li>✅ الخروج من مجموعة الواتساب للصف الذي كنت فيه في الدورة الثانية: الصف ${secondGrade}</li>
+            <li>📌 فترة التعويضية للصف الحالي، بعد اجتيازها تنتقل للصف المترفع.</li>
+            <li>🔗 رابط EMIS للدخول إلى الدورة التعويضية: 
+              <a href="https://emis.unrwa.org/Result/StudentsResult" target="_blank">https://emis.unrwa.org/Result/StudentsResult</a>
+            </li>
+            <li>✉️ متابعة مجموعة الواتساب للصف الحالي للبطاقات التعليمية والاختبارات.</li>
+          </ol>
+        `;
+            } else {
+                instructions = `
+          <p class="success">📘 الصف الذي ستدرس فيه الدورة التعويضية: الصف ${secondGrade}</p>
+          <ol>
+            <li>🔗 رابط EMIS للدخول إلى الدورة التعويضية: 
+              <a href="https://emis.unrwa.org/Result/StudentsResult" target="_blank">https://emis.unrwa.org/Result/StudentsResult</a>
+            </li>
+            <li>✉️ ستظهر لك رابط مجموعة الواتساب الخاصة بالصف على الصفحة.</li>
+            <li>📌 متابعة المجموعة لنشر البطاقات التعليمية، الاختبارات الأسبوعية، والاختبار النهائي.</li>
+          </ol>
+        `;
+            }
+
+            // زر إعادة الفحص
+            instructions += `<button onclick="restartQuiz()">🔄 فحص من جديد</button>`;
+
+            resultBox.innerHTML = instructions;
+            resultBox.classList.remove("hidden");
+            document.querySelectorAll('.question-box').forEach(q => q.classList.add('hidden'));
+        }
+
+        function restartQuiz() {
+            document.querySelectorAll('.question-box').forEach(q => q.classList.add('hidden'));
+            document.getElementById('q1').classList.remove('hidden');
+            document.getElementById('result').classList.add('hidden');
+
+            // إعادة تعيين الاختيارات
+            document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+        }
+    </script>
+
+</body>
+
+</html>
